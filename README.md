@@ -197,25 +197,41 @@ The complete pipeline is automated via a Databricks Workflows job:
 
 ### Prerequisites
 
+- GitHub account ([sign up](https://github.com/signup))
 - Databricks Free Edition account 
   ([sign up](https://www.databricks.com/learn/free-edition))
 - API-Football free tier account 
   ([sign up](https://dashboard.api-football.com/register))
-- Your API key from api-sports.io dashboard
+- Your API key from the api-sports.io dashboard
 
-### Step 1: Clone the Repository
-```bash
-git clone https://github.com/mavilasantos/serie-a-colombian-players-pipeline.git
+### Step 1: Connect Databricks to GitHub
+
+**Part A: Generate a GitHub Personal Access Token**
+
+1. In GitHub go to **Settings** → **Developer settings** → 
+   **Personal access tokens** → **Tokens (classic)**
+2. Click **Generate new token (classic)**
+3. Give it a name (e.g. `databricks-integration`) and check the **repo** scope
+4. Click **Generate token** and copy it immediately — you will not see it again
+
+**Part B: Link GitHub to Databricks**
+
+1. In Databricks click your username (top right) → **Settings**
+2. Navigate to **Linked accounts** or **Developer** → **Git integration**
+3. Set Git provider to **GitHub**, enter your GitHub username and paste the token
+4. Click **Save**
+
+**Part C: Clone the Repository into Databricks**
+
+1. In the Databricks left sidebar click **Workspace** → your user folder
+2. Click **Add** → **Git folder**
+3. Paste the repository URL:
 ```
+   https://github.com/mavilasantos/serie-a-colombian-players-pipeline.git
+```
+4. Click **Create**
 
-### Step 2: Connect Databricks to GitHub
-
-1. In Databricks go to **User Settings**
-2. Click **Git Integration**
-3. Connect your GitHub account
-4. Clone the repository into your Databricks workspace
-
-### Step 3: Run Infrastructure Setup
+### Step 2: Run Infrastructure Setup
 
 Open and run `01_infrastructure_setup.ipynb` — provisions all Unity 
 Catalog infrastructure across all three layers:
@@ -227,7 +243,7 @@ gold_dev.football_analytics
 
 This notebook is idempotent — safe to run multiple times.
 
-### Step 4: Configure Your API Key
+### Step 3: Configure Your API Key
 
 Open `02_bronze_ingestion.ipynb` and in **Cell 1** replace the 
 placeholder:
@@ -239,7 +255,7 @@ API_KEY = "YOUR_API_KEY_HERE"
 > `.gitignore` in this repository excludes it automatically. Never 
 > commit credentials to version control.
 
-### Step 5: Configure Pipeline Parameters
+### Step 4: Configure Pipeline Parameters
 
 In `02_bronze_ingestion.ipynb` **Cell 1:**
 ```python
@@ -271,7 +287,7 @@ Value: 135
 > any nationality, changing `pipeline.target_league_id` retargets 
 > the league filter without editing any code.
 
-### Step 6: Run the Bronze Ingestion Notebook
+### Step 5: Run the Bronze Ingestion Notebook
 
 Open and run all cells in `02_bronze_ingestion.ipynb` sequentially.
 
@@ -283,8 +299,8 @@ Season validated. Located 20 teams.
 Team IDs: [487, 489, ...]
 Landing zone folder secured at: /Volumes/bronze_dev/api_sports/landing_zone/serie_a_2024/
 Delta table target: bronze_dev.api_sports.raw_serie_a_players_2024
-Starting extraction. Run timestamp: 20240315_020000
-  Written: team_487_page_1_20240315_020000.json
+Starting extraction. Run timestamp: 20260321_020000
+  Written: team_487_page_1_20260321_020000.json
   ...
 Extraction complete. Files landed in: /Volumes/bronze_dev/api_sports/landing_zone/serie_a_2024/
 Auto Loader commit complete. Table: bronze_dev.api_sports.raw_serie_a_players_2024
@@ -293,7 +309,7 @@ Auto Loader commit complete. Table: bronze_dev.api_sports.raw_serie_a_players_20
 > **Expected duration:** approximately 8-10 minutes for 20 teams 
 > at the enforced 7-second delay between API requests.
 
-### Step 7: Create the LakeFlow Pipeline
+### Step 6: Create the LakeFlow Pipeline
 
 1. In Databricks navigate to **ETL Pipelines** in the left sidebar
 2. Click **New Pipeline** → **Start with sample code in Python**
@@ -315,7 +331,7 @@ Auto Loader commit complete. Table: bronze_dev.api_sports.raw_serie_a_players_20
 
 Expected output: 6 tables created successfully with green checkmarks.
 
-### Step 8: Create the Databricks SQL Dashboard
+### Step 7: Create the Databricks SQL Dashboard
 
 1. Navigate to **SQL Editor** in the left sidebar
 2. Go to **Dashboards** → **Create Dashboard**
@@ -324,7 +340,7 @@ Expected output: 6 tables created successfully with green checkmarks.
 5. Build the 6 panels referencing the source tables in the Dashboard 
    section above
 
-### Step 9: Set Up Automated Orchestration
+### Step 8: Set Up Automated Orchestration
 
 1. Navigate to **Workflows** in the left sidebar
 2. Click **Create Job**
