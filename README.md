@@ -255,25 +255,19 @@ API_KEY = "YOUR_API_KEY_HERE"
 > `.gitignore` in this repository excludes it automatically. Never 
 > commit credentials to version control.
 
-### Step 4: Configure Pipeline Parameters
+### Step 4: Verify Pipeline Parameters
 
-In `02_bronze_ingestion.ipynb` **Cell 1:**
+The default configuration targets Colombian players in Serie A 2024. 
+Confirm the following values are set in `02_bronze_ingestion.ipynb` 
+Cell 1:
 ```python
-TARGET_LEAGUE_NAME = "Serie A"   # Change to target a different league
-TARGET_COUNTRY     = "Italy"     # Change to match the league's country
-TARGET_SEASON      = "2024"      # Change to target a different season
+TARGET_LEAGUE_NAME = "Serie A"
+TARGET_COUNTRY     = "Italy"
+TARGET_SEASON      = "2024"
 ```
 
-In `lakeflow_pipeline/silver_transformations.py`, update:
-```python
-BRONZE_TABLE = "bronze_dev.api_sports.raw_serie_a_players_2024"
-```
-
-Update this value to match the table generated for your target 
-league and season (e.g. `bronze_dev.api_sports.raw_la_liga_players_2025`).
-
-In the LakeFlow pipeline UI go to **Pipeline configuration** → 
-**Add configuration** and set:
+In the LakeFlow pipeline UI under **Pipeline configuration** → 
+**Add configuration** confirm:
 ```
 Key:   pipeline.target_nationality
 Value: colombia
@@ -281,11 +275,6 @@ Value: colombia
 Key:   pipeline.target_league_id
 Value: 135
 ```
-
-> Both parameters are shared across Silver and Gold — changing 
-> `pipeline.target_nationality` redirects all analytical output to 
-> any nationality, changing `pipeline.target_league_id` retargets 
-> the league filter without editing any code.
 
 ### Step 5: Run the Bronze Ingestion Notebook
 
@@ -337,8 +326,8 @@ Expected output: 6 tables created successfully with green checkmarks.
 2. Go to **Dashboards** → **Create Dashboard**
 3. Name it: `Colombian Players in Serie A — 2024 Season Analytics`
 4. Add datasets from the five Gold tables
-5. Build the 6 panels referencing the source tables in the Dashboard 
-   section above
+5. Build the 6 panels referencing the source tables in the 
+   Dashboard section above
 
 ### Step 8: Set Up Automated Orchestration
 
@@ -361,6 +350,39 @@ Expected output: 6 tables created successfully with green checkmarks.
 8. Click **Save**
 
 ---
+
+### Retargeting the Pipeline
+
+Once the pipeline runs successfully with the default configuration, 
+it can be retargeted to any league, season, or nationality:
+
+**To change the league or season**, update in 
+`02_bronze_ingestion.ipynb` Cell 1:
+```python
+TARGET_LEAGUE_NAME = "Premier League"
+TARGET_COUNTRY     = "England"
+TARGET_SEASON      = "2024"
+```
+
+Then update in `lakeflow_pipeline/silver_transformations.py`:
+```python
+BRONZE_TABLE = "bronze_dev.api_sports.raw_premier_league_players_2024"
+```
+
+And update the pipeline UI parameter:
+```
+Key:   pipeline.target_league_id
+Value: 39   # Premier League ID — confirmed by Bronze Cell 2 output
+```
+
+**To change the nationality**, update only the pipeline UI parameter:
+```
+Key:   pipeline.target_nationality
+Value: brazil
+```
+
+No code changes required — Silver and Gold automatically redirect 
+all analytical output to the new nationality.
 
 ## Repository Structure
 ```
