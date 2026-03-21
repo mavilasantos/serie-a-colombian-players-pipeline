@@ -48,19 +48,19 @@ metrics rather than goal output.
 
 ## Tech Stack
 
-| Technology | Role | Version |
-|---|---|---|
-| **Databricks** | Unified platform — ingestion, transformation, orchestration, visualization | Community Edition |
-| **Apache Spark / PySpark** | Distributed data processing engine | 3.x |
-| **Delta Lake** | ACID-compliant storage with schema evolution and transaction log | Built-in |
-| **LakeFlow Declarative Pipelines** | Declarative Silver and Gold transformation framework | Built-in |
-| **Databricks Auto Loader** | Incremental file ingestion with checkpoint tracking | Built-in |
-| **Databricks Workflows** | Native pipeline orchestration and scheduling | Built-in |
-| **Databricks SQL Dashboard** | Business analytics visualization | Built-in |
-| **Unity Catalog** | Data governance — 3-level namespace, lineage, access control | Built-in |
-| **API-Football** | Source REST API — player statistics, team and league data | v3 |
-| **Python** | Extraction engine and pipeline logic | 3.x |
-| **GitHub** | Version control | — |
+| Technology | Role |
+|---|---|
+| **Databricks** | Unified platform — ingestion, transformation, orchestration, visualization |
+| **Apache Spark / PySpark** | Distributed data processing engine |
+| **Delta Lake** | ACID-compliant storage with schema evolution and transaction log |
+| **LakeFlow Declarative Pipelines** | Declarative Silver and Gold transformation framework |
+| **Databricks Auto Loader** | Incremental file ingestion with checkpoint tracking |
+| **Databricks Workflows** | Native pipeline orchestration and scheduling |
+| **Databricks SQL Dashboard** | Business analytics visualization |
+| **Unity Catalog** | Data governance — 3-level namespace, lineage, access control |
+| **API-Football** | Source REST API — player statistics, team and league data |
+| **Python** | Extraction engine and pipeline logic |
+| **GitHub** | Version control |
 
 **Why Databricks as the unified platform?**
 Databricks consolidates every layer of the data engineering stack — 
