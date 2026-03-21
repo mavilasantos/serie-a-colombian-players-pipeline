@@ -36,13 +36,61 @@ metrics rather than goal output.
 
 ## Architecture
 
-### High Level Architecture (High-level Design)
+### High Level Architecture
 
 ![High Level Design](assets/high_level_design.png)
 
 ### Technical Architecture (Low-Level Design)
 
 ![Low Level Design](assets/low_level_design.png)
+
+---
+
+## Dashboard
+
+### Dashboard Preview
+
+![Dashboard Overview](assets/dashboard_preview.png)
+
+*Position-aware performance ranking, goal contributions, club analysis, 
+and individual player statistics — all sourced directly from governed 
+Gold Delta tables via Databricks SQL.*
+
+### Panel Architecture
+
+| Panel | Source Table | Question Answered |
+|---|---|---|
+| KPI Overview | `league_nationality_summary` | Overall Colombian presence in Serie A |
+| Performance Ranking | `player_ranking` | Who performed best by position-aware score? |
+| Goal Contributions | `player_performance` | Who scored and assisted? |
+| Position Breakdown | `position_performance_breakdown` | Which positions do Colombians excel in? |
+| Club Contribution | `team_nationality_contribution` | Which clubs benefited most? |
+| Player Statistics | `player_performance` | Complete individual stats |
+
+> D. Zapata and J. Cabal are excluded from the Performance Ranking 
+> due to insufficient playing time (under 900 minutes). Both players 
+> are fully visible in the Player Statistics panel. D. Zapata's 3 
+> goals in only 589 minutes reflects a season disrupted by serious 
+> injury.
+
+---
+
+## Key Results
+
+| Metric | Value |
+|---|---|
+| Colombian Players in Serie A 2024 | 6 |
+| Total Goals | 9 |
+| Total Assists | 2 |
+| Total Minutes Played | 10,490 |
+| Average Player Rating | 6.90 |
+| Average Pass Accuracy | 57% |
+| Average Duel Win Rate | 59.51% |
+| Total Yellow Cards | 22 |
+
+> Top performer: D. Mosquera (Hellas Verona) — Rank 1, composite 
+> score 60.86. Most minutes: D. Vásquez (Empoli) — 2,880 minutes 
+> as first-choice goalkeeper throughout the season.
 
 ---
 
@@ -159,25 +207,6 @@ The complete pipeline is automated via a Databricks Workflows job:
 
 ---
 
-## Key Results
-
-| Metric | Value |
-|---|---|
-| Colombian Players in Serie A 2024 | 6 |
-| Total Goals | 9 |
-| Total Assists | 2 |
-| Total Minutes Played | 10,490 |
-| Average Player Rating | 6.90 |
-| Average Pass Accuracy | 57% |
-| Average Duel Win Rate | 59.51% |
-| Total Yellow Cards | 22 |
-
-Top performer: D. Mosquera (Hellas Verona) — Rank 1, composite score 60.86.
-
-Most minutes: D. Vásquez (Empoli) — 2,880 minutes as first-choice goalkeeper throughout the season.
-
----
-
 ## How to Run
 
 ### Prerequisites
@@ -190,7 +219,7 @@ Most minutes: D. Vásquez (Empoli) — 2,880 minutes as first-choice goalkeeper 
 
 ### Step 1: Clone the Repository
 ```bash
-git clone https://github.com/mavilaPolimi/serie-a-colombian-players-pipeline.git
+git clone https://github.com/mavilasantos/serie-a-colombian-players-pipeline.git
 ```
 
 ### Step 2: Connect Databricks to GitHub
@@ -233,13 +262,13 @@ TARGET_COUNTRY     = "Italy"     # Change to match the league's country
 TARGET_SEASON      = "2024"      # Change to target a different season
 ```
 
-In `lakeflow_pipeline/silver_transformations.py`:
+In `lakeflow_pipeline/silver_transformations.py`, update:
 ```python
 BRONZE_TABLE = "bronze_dev.api_sports.raw_serie_a_players_2024"
 ```
 
 Update this value to match the table generated for your target 
-league and season (e.g. `bronze_dev.api_sports.raw_la_liga_players_2024`).
+league and season (e.g. `bronze_dev.api_sports.raw_la_liga_players_2025`).
 
 In the LakeFlow pipeline UI go to **Pipeline configuration** → 
 **Add configuration** and set:
@@ -269,7 +298,7 @@ Team IDs: [487, 489, ...]
 Landing zone folder secured at: /Volumes/bronze_dev/api_sports/landing_zone/serie_a_2024/
 Delta table target: bronze_dev.api_sports.raw_serie_a_players_2024
 Starting extraction. Run timestamp: 20240315_020000
-  Written: team_487_page_1_20260321_020000.json
+  Written: team_487_page_1_20240315_020000.json
   ...
 Extraction complete. Files landed in: /Volumes/bronze_dev/api_sports/landing_zone/serie_a_2024/
 Auto Loader commit complete. Table: bronze_dev.api_sports.raw_serie_a_players_2024
@@ -277,8 +306,6 @@ Auto Loader commit complete. Table: bronze_dev.api_sports.raw_serie_a_players_20
 
 > **Expected duration:** approximately 8-10 minutes for 20 teams 
 > at the enforced 7-second delay between API requests.
-
----
 
 ### Step 7: Create the LakeFlow Pipeline
 
@@ -291,13 +318,13 @@ Auto Loader commit complete. Table: bronze_dev.api_sports.raw_serie_a_players_20
    - Default catalog: `gold_dev`
    - Default schema: `football_analytics`
 5. Add configuration parameters:
-   ```
+```
    Key:   pipeline.target_nationality
    Value: colombia
 
    Key:   pipeline.target_league_id
    Value: 135
-   ```
+```
 6. Click **Start** to run the pipeline
 
 Expected output: 6 tables created successfully with green checkmarks.
@@ -309,7 +336,7 @@ Expected output: 6 tables created successfully with green checkmarks.
 3. Name it: `Colombian Players in Serie A — 2024 Season Analytics`
 4. Add datasets from the five Gold tables
 5. Build the 6 panels referencing the source tables in the Dashboard 
-   section below
+   section above
 
 ### Step 9: Set Up Automated Orchestration
 
@@ -346,43 +373,8 @@ Expected output: 6 tables created successfully with green checkmarks.
 │   └── dashboard_preview.png          # Dashboard preview
 ├── .gitignore                         # Excludes .env and API credentials
 ├── README.md                          # This file
-└── TECHNICAL_DOCUMENTATION.md         # Complete engineering reference
+└── TECHNICAL_DOCUMENTATION.md        # Complete engineering reference
 ```
-
-> **Note:** The Silver transformation logic was initially developed 
-> and validated in an exploration notebook before being refactored 
-> into the production LakeFlow declarative pipeline. The final 
-> production implementation lives entirely in 
-> `lakeflow_pipeline/silver_transformations.py`.
-
----
-
-## Dashboard
-
-### Dashboard Preview
-
-![Dashboard Overview](assets/dashboard_preview.png)
-
-*Position-aware performance ranking, goal contributions, club analysis, 
-and individual player statistics — all sourced directly from governed 
-Gold Delta tables via Databricks SQL.*
-
-### Panel Architecture
-
-| Panel | Source Table | Question Answered |
-|---|---|---|
-| KPI Overview | `league_nationality_summary` | Overall Colombian presence in Serie A |
-| Performance Ranking | `player_ranking` | Who performed best by position-aware score? |
-| Goal Contributions | `player_performance` | Who scored and assisted? |
-| Position Breakdown | `position_performance_breakdown` | Which positions do Colombians excel in? |
-| Club Contribution | `team_nationality_contribution` | Which clubs benefited most? |
-| Player Statistics | `player_performance` | Complete individual stats |
-
-> **Note:** D. Zapata and J. Cabal are excluded from the Performance 
-> Ranking due to insufficient playing time (under 900 minutes — 
-> approximately 10 full matches). Both players are fully visible in 
-> the Player Statistics panel. D. Zapata's 3 goals in only 589 minutes 
-> reflects a season disrupted by serious injury.
 
 ---
 
@@ -450,7 +442,13 @@ business filtering belongs exclusively in Gold.
 
 Full engineering reference covering all architectural decisions, 
 technology selection rationale, and implementation details is 
-available in 
-[TECHNICAL_DOCUMENTATION.md](TECHNICAL_DOCUMENTATION.md).
+available in [TECHNICAL_DOCUMENTATION.md](TECHNICAL_DOCUMENTATION.md).
 
 ---
+
+## Author
+
+**Miguel Angel Avila Santos**
+
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=flat&logo=linkedin&logoColor=white)](https://linkedin.com/in/mavilasantos)
+[![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/mavilasantos)
