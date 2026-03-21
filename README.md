@@ -191,7 +191,7 @@ The complete pipeline is automated via a Databricks Workflows job:
 
 ### Step 1: Clone the Repository
 ```bash
-git clone https://github.com/mavilaPolimi/serie-a-colombian-players-pipeline
+git clone https://github.com/mavilaPolimi/serie-a-colombian-players-pipeline.git
 ```
 
 ### Step 2: Connect Databricks to GitHub
