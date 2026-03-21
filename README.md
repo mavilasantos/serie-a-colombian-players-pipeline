@@ -172,10 +172,9 @@ The complete pipeline is automated via a Databricks Workflows job:
 | Average Duel Win Rate | 59.51% |
 | Total Yellow Cards | 22 |
 
-> Top performer: D. Mosquera (Hellas Verona) — Rank 1, composite score 60.86.
+Top performer: D. Mosquera (Hellas Verona) — Rank 1, composite score 60.86.
 
-> Most minutes: D. Vásquez (Empoli) — 2,880 minutes 
-> as first-choice goalkeeper throughout the season.
+Most minutes: D. Vásquez (Empoli) — 2,880 minutes as first-choice goalkeeper throughout the season.
 
 ---
 
