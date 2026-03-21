@@ -1,53 +1,60 @@
+# =============================================================================
+# FILE: silver_transformations.py
+# PURPOSE: Defines the players_cleaned Silver Delta table using LakeFlow's
+#          declarative @dlt.table decorator.
+# INPUT:   bronze_dev.api_sports.raw_serie_a_players_2024 (Bronze Delta Table)
+# OUTPUT:  silver_dev.football_analytics.players_cleaned (Silver Delta Table)
+# =============================================================================
+
 import dlt
 from pyspark.sql.functions import col, explode, trim, lower, when, regexp_extract
 
-# =============================================================================
-# CONFIGURATION — resolved at module level, outside any decorated function
-# =============================================================================
-TARGET_NATIONALITY = "colombia"
+# Shared with gold_transformations.py via pipeline UI parameter
+TARGET_NATIONALITY = spark.conf.get("pipeline.target_nationality", "colombia")
 
-# League ID for Serie A
-# This value is dynamically resolved by the Bronze validation layer (Cell 2)
-# and confirmed as 135 for Serie A. Update this value when targeting a 
-# different league — the Bronze pipeline's Cell 2 output confirms the correct ID.
-TARGET_LEAGUE_ID = 135
+# Filters exploded statistics to target league only — confirmed by Bronze Cell 2 output
+TARGET_LEAGUE_ID = int(spark.conf.get("pipeline.target_league_id", "135"))
+
+# Update when targeting a different league or season
+BRONZE_TABLE = "bronze_dev.api_sports.raw_serie_a_players_2024"
+
+# =============================================================================
+# SILVER TABLE: players_cleaned
+# =============================================================================
 
 @dlt.table(
     name="players_cleaned",
-    comment="Flattened, deduplicated, and enriched Serie A player statistics. One row per player per team per season."
+    comment="Flattened, deduplicated, and enriched player statistics. One row per player per team per season."
 )
 
-# --- DATA QUALITY EXPECTATIONS ---
-# expect_or_fail: Pipeline halts — record is unrecoverable without player_id
+# CRITICAL: Pipeline halts — null player_id corrupts all downstream Gold tables
 @dlt.expect_or_fail("valid_player_id", "player_id IS NOT NULL")
 
-# expect_or_drop: Ghost players automatically removed — registered but never played
+# MODERATE: Ghost players removed — zero analytical value, distorts averages
 @dlt.expect_or_drop("active_players_only", "minutes_played > 0")
 
-# INFORMATIONAL — logical consistency checks
-@dlt.expect("valid_shot_consistency", "shots_on_target <= shots_total")
+# INFORMATIONAL: Logical impossibilities — warn and preserve
+@dlt.expect("valid_shot_consistency",    "shots_on_target <= shots_total")
 @dlt.expect("valid_dribble_consistency", "dribbles_successful <= dribble_attempts")
-@dlt.expect("valid_duel_consistency", "duels_won <= duels_total")
-@dlt.expect("valid_pass_accuracy", "pass_accuracy_percent IS NULL OR (pass_accuracy_percent >= 0 AND pass_accuracy_percent <= 100)")
+@dlt.expect("valid_duel_consistency",    "duels_won <= duels_total")
+@dlt.expect("valid_pass_accuracy",       "pass_accuracy_percent IS NULL OR (pass_accuracy_percent >= 0 AND pass_accuracy_percent <= 100)")
 @dlt.expect("valid_minutes_if_appeared", "appearances = 0 OR minutes_played > 0")
 
 def players_cleaned():
 
-    # --- READ FROM BRONZE ---
-    df_bronze = spark.read.table(
-        "bronze_dev.api_sports.raw_serie_a_players_2024"
-    )
+    df_bronze = spark.read.table(BRONZE_TABLE)
 
-    # --- STEP 1: EXPLODE STATISTICS ARRAY ---
-    # Converts one row per player (with nested array) into 
-    # one row per player per competition
+    # --- STEP 1: EXPLODE ---
+    # Statistics array has one entry per competition — explode enables league filtering
     df_exploded = df_bronze.withColumn(
         "stat_element", explode(col("statistics"))
     )
-    # Null guard — remove records with empty statistics arrays
     df_exploded = df_exploded.filter(col("stat_element").isNotNull())
 
-    # --- STEP 2: FLATTEN, RENAME & STANDARDIZE ---
+    # --- STEP 2: FLATTEN & STANDARDIZE ---
+    # Reference/filter columns: trim + lower for consistent filtering
+    # Display columns: trim only — preserve natural casing for dashboard
+    # height/weight: regexp_extract handles API inconsistency ("185 cm" vs "185")
     df_flattened = df_exploded.select(
 
         # PLAYER IDENTITY
@@ -56,18 +63,13 @@ def players_cleaned():
         trim(col("player.firstname")).alias("first_name"),
         trim(col("player.lastname")).alias("last_name"),
         col("player.age").cast("integer").alias("age"),
-
-        # PHYSICAL PROFILE
-        # regexp_extract handles API inconsistency: "185 cm" vs "185"
         regexp_extract(col("player.height"), r"(\d+)", 1)
             .cast("integer").alias("height_cm"),
         regexp_extract(col("player.weight"), r"(\d+)", 1)
             .cast("integer").alias("weight_kg"),
-
-        # NATIONALITY (lowercased for consistent filtering)
         trim(lower(col("player.nationality"))).alias("nationality"),
 
-        # TEAM & LEAGUE CONTEXT
+        # TEAM & LEAGUE
         col("stat_element.team.id").alias("team_id"),
         trim(lower(col("stat_element.team.name"))).alias("team_name"),
         col("stat_element.league.id").alias("league_id"),
@@ -123,25 +125,23 @@ def players_cleaned():
         col("stat_element.penalty.saved").cast("integer").alias("penalties_saved"),
     )
 
-    # --- STEP 3: FILTER ---
-    # Keep only target league and remove ghost players
-    # Note: ghost player expectation (@dlt.expect_or_drop) handles this
-    # declaratively, but we keep the explicit filter for clarity
+    # --- STEP 3: FILTER BY LEAGUE ---
+    # Other competitions (Coppa Italia, UCL) became separate rows after explode — discard here.
+    # Ghost player removal handled by @dlt.expect_or_drop, not here.
     df_league_only = df_flattened.filter(
         col("league_id") == TARGET_LEAGUE_ID
     )
 
     # --- STEP 4: DEDUPLICATE ---
-    # Collapses duplicate records from multiple Bronze pipeline runs
-    # Preserves mid-season transfer history as distinct rows
+    # Composite key preserves mid-season transfer history — one row per player per team.
     df_deduplicated = df_league_only.dropDuplicates(
         ["player_id", "team_id", "season"]
     )
 
-    # --- STEP 5: HANDLE NULLS ---
-    # Only fill cumulative counters with 0
-    # Rate/percentage metrics (rating, pass_accuracy_percent) remain NULL
-    # Physical attributes (height_cm, weight_kg) remain NULL if unknown
+    # --- STEP 5: NULL HANDLING ---
+    # Cumulative counters → fillna(0): zero is the correct value for no activity
+    # Rate metrics (rating, pass_accuracy_percent) → NULL: not recorded ≠ zero
+    # Physical attributes (height_cm, weight_kg) → NULL: unknown ≠ zero
     cumulative_stats = [
         "appearances", "lineups", "minutes_played", "sub_in", "sub_out",
         "goals_total", "assists_total", "shots_total", "shots_on_target",
@@ -158,9 +158,10 @@ def players_cleaned():
     df_clean = df_deduplicated.fillna(0, subset=cumulative_stats)
 
     # --- STEP 6: DERIVED COLUMNS ---
-    # Computed after fillna to ensure denominators are clean
-    # All rate metrics use when() to guard against division by zero
-    # These remain NULL when denominator is zero — not 0% which would be misleading
+    # Computed once in Silver — Gold tables read pre-computed values,
+    # guaranteeing consistency across all consumers.
+    # when() guards division by zero — zero denominator produces NULL,
+    # not 0%, because no attempts ≠ zero success rate.
     df_final = df_clean.select(
         "*",
         when(col("shots_total") > 0,
