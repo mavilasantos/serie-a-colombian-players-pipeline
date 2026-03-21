@@ -302,7 +302,6 @@ Auto Loader commit complete. Table: bronze_dev.api_sports.raw_serie_a_players_20
 6. Click **Start** to run the pipeline
 
 Expected output: 6 tables created successfully with green checkmarks.
-````
 
 ### Step 8: Create the Databricks SQL Dashboard
 
@@ -449,10 +448,6 @@ business filtering belongs exclusively in Gold.
 - **Databricks Secrets integration:** Migrate API key management from 
   the local `.env` pattern to Databricks Secrets via 
   `dbutils.secrets.get()` for enterprise-grade credential management.
-
----
-
-## Documentation
 
 Full engineering reference covering all architectural decisions, 
 technology selection rationale, and implementation details is 
