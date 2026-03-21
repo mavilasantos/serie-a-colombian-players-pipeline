@@ -1,9 +1,6 @@
 # Colombian Players in Serie A — End-to-End Databricks Lakehouse Pipeline
 
-> A production-grade, fully automated data pipeline built on the 
-> Databricks Data Intelligence Platform, tracking the performance of 
-> Colombian players in Italy's Serie A 2024 season — from raw API 
-> extraction to interactive business analytics dashboard.
+A production-grade, fully automated data pipeline built on the Databricks Data Intelligence Platform, tracking the performance of Colombian players in Italy's Serie A 2024 season — from raw API extraction to interactive business analytics dashboard.
 
 ---
 
@@ -47,9 +44,6 @@ metrics rather than goal output.
 ---
 
 ## Dashboard
-
-### Dashboard Preview
-
 ![Dashboard Overview](assets/dashboard_preview.png)
 
 *Position-aware performance ranking, goal contributions, club analysis, 
@@ -67,11 +61,7 @@ Gold Delta tables via Databricks SQL.*
 | Club Contribution | `team_nationality_contribution` | Which clubs benefited most? |
 | Player Statistics | `player_performance` | Complete individual stats |
 
-> D. Zapata and J. Cabal are excluded from the Performance Ranking 
-> due to insufficient playing time (under 900 minutes). Both players 
-> are fully visible in the Player Statistics panel. D. Zapata's 3 
-> goals in only 589 minutes reflects a season disrupted by serious 
-> injury.
+D. Zapata and J. Cabal are excluded from the Performance Ranking due to insufficient playing time (under 900 minutes). Both players are fully visible in the Player Statistics panel. D. Zapata's 3 goals in only 589 minutes reflects a season disrupted by serious injury.
 
 ---
 
@@ -88,9 +78,9 @@ Gold Delta tables via Databricks SQL.*
 | Average Duel Win Rate | 59.51% |
 | Total Yellow Cards | 22 |
 
-> Top performer: D. Mosquera (Hellas Verona) — Rank 1, composite 
-> score 60.86. Most minutes: D. Vásquez (Empoli) — 2,880 minutes 
-> as first-choice goalkeeper throughout the season.
+Top performer: D. Mosquera (Hellas Verona) — Rank 1, composite score 60.86. 
+
+Most minutes: D. Vásquez (Empoli) — 2,880 minutes as first-choice goalkeeper throughout the season.
 
 ---
 
@@ -163,11 +153,7 @@ The complete pipeline is automated via a Databricks Workflows job:
 | **Task 1** | Bronze Ingestion Notebook — Retry: None |
 | **Task 2** | LakeFlow Pipeline — runs only if Task 1 succeeds |
 
-> **Why Retry: None on Task 1?** Each Bronze run consumes approximately 
-> 62 of the 100 daily API requests. Automatic retries would risk 
-> exhausting the daily quota before the next scheduled run. Failures 
-> trigger an immediate email notification — the engineer investigates 
-> and reruns manually after the quota resets.
+**Why Retry: None on Task 1?** Each Bronze run consumes approximately 62 of the 100 daily API requests. Automatic retries would risk exhausting the daily quota before the next scheduled run. Failures trigger an immediate email notification — the engineer investigates and reruns manually after the quota resets.
 
 ### Key Engineering Decisions
 
