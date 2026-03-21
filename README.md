@@ -341,7 +341,7 @@ Expected output: 6 tables created successfully with green checkmarks.
 │   ├── silver_transformations.py      # LakeFlow Silver @dlt.table definitions
 │   └── gold_transformations.py        # LakeFlow Gold @dlt.table definitions
 ├── assets/
-│   ├── high_level_design.png    	# High level architecture diagram
+│   ├── high_level_design.png          # High level architecture diagram
 │   ├── low_level_design.png           # Detailed technical architecture diagram
 │   └── dashboard_preview.png          # Dashboard preview
 ├── .gitignore                         # Excludes .env and API credentials
