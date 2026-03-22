@@ -551,8 +551,8 @@ than in the transformation logic.
 
 The Bronze task retry policy is deliberately set to `None` rather than 
 the standard 2-retry configuration. Each Bronze run consumes 
-approximately 42 of the 100 daily API requests. Two automatic retries 
-on a failed run would consume up to 126 requests — exceeding the daily 
+approximately 62 of the 100 daily API requests. Two automatic retries 
+on a failed run would consume up to 124 requests — exceeding the daily 
 quota and leaving no capacity for the next scheduled run.
 
 Failures trigger an immediate email notification. The engineer 
